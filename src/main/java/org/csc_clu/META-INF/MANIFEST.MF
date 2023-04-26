@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Main-Class: org.csc_clu.AnimatronicEyesDriver
+Name: AnimatronicEyes
+Specification-Title: Animatronic Eyes
+Specification-Version: 1.0
+Specification-Vendor: Computer Science Club @ California Lutheran University
+Implementation-Title: AnimatronicEyes
+Implementation-Version: 1.0
+Implementation-Vendor: Computer Science Club @ California Lutheran University
