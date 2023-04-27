@@ -2,9 +2,13 @@ package org.csc_clu;
 
 import com.fazecast.jSerialComm.SerialPort;
 
+import java.util.Arrays;
+
 public class AnimatronicEyesDriver {
     public static void main(String[] args) {
+        System.out.println("Connecting to animatronic eyes");
         AnimatronicEyesDriver eyes = new AnimatronicEyesDriver();
+        System.out.println("Connected.");
 
         try {
             int delay = 500; // Delay in ms
@@ -18,7 +22,11 @@ public class AnimatronicEyesDriver {
             Thread.sleep(delay);
             eyes.setEyePosition(512, 512);
             Thread.sleep(delay);
-            eyes.setEyePosition(1024, 512);
+            eyes.setEyePosition(1023, 512);
+            Thread.sleep(delay);
+            eyes.setEyePosition(512, 512);
+            Thread.sleep(delay);
+            eyes.setEyePosition(512, 1023);
             Thread.sleep(delay);
             eyes.setEyePosition(512, 512);
             Thread.sleep(delay);
@@ -26,17 +34,38 @@ public class AnimatronicEyesDriver {
             Thread.sleep(delay);
             eyes.setEyePosition(512, 512);
             Thread.sleep(delay);
-            eyes.setEyePosition(512, 1024);
+
+            eyes.setEyePosition(0, 0);
+            Thread.sleep(delay);
+            eyes.setEyePosition(512, 512);
+            Thread.sleep(delay);
+            eyes.setEyePosition(1023, 0);
+            Thread.sleep(delay);
+            eyes.setEyePosition(512, 512);
+            Thread.sleep(delay);
+            eyes.setEyePosition(0, 1023);
+            Thread.sleep(delay);
+            eyes.setEyePosition(512, 512);
+            Thread.sleep(delay);
+            eyes.setEyePosition(1023, 1023);
             Thread.sleep(delay);
             eyes.setEyePosition(512, 512);
             Thread.sleep(delay);
 
             // Test eyelid movement
+            eyes.setEyelidPosition(128);
+            Thread.sleep(delay);
             eyes.setEyelidPosition(0);
+            Thread.sleep(delay);
+            eyes.setEyelidPosition(128);
             Thread.sleep(delay);
             eyes.setEyelidPosition(512);
             Thread.sleep(delay);
+            eyes.setEyelidPosition(640);
+            Thread.sleep(delay);
             eyes.setEyelidPosition(750);
+            Thread.sleep(delay);
+            eyes.setEyelidPosition(640);
             Thread.sleep(delay);
             eyes.setEyelidPosition(512);
             Thread.sleep(delay);
@@ -44,11 +73,13 @@ public class AnimatronicEyesDriver {
             // Test blink
             eyes.blinkEyes((byte) 10);
             Thread.sleep(delay);
-            eyes.blinkEyes((byte) 10);
-            Thread.sleep(delay);
             eyes.blinkEyes((byte) 20);
             Thread.sleep(delay);
-            eyes.blinkEyes((byte) 20);
+
+            // Test animations
+            eyes.blinkAnimation((byte) 100);
+            Thread.sleep(delay);
+//            eyes.blinkAnimation((byte) 200);
             Thread.sleep(delay);
 
         } catch (InterruptedException e) {
@@ -102,27 +133,27 @@ public class AnimatronicEyesDriver {
         } else {
             comm = serialPorts[0];
         }
-        System.out.println("Comm device: " + comm.getPortDescription());
+//        System.out.println("Comm device: " + comm.getPortDescription());
 
-        System.out.println("Opening comm device");
+//        System.out.println("Opening comm device");
         comm.openPort();
         comm.flushIOBuffers();
 
-        System.out.println("Waiting for device to be ready");
+//        System.out.println("Waiting for device to be ready");
         waitForReady();
 
-        System.out.println("Initializing animatronics");
+//        System.out.println("Initializing animatronics");
         initialize();
 
-        System.out.println("Getting version information");
+//        System.out.println("Getting version information");
         getEyeVersionInfo();
-        System.out.println("Checking version information");
+//        System.out.println("Checking version information");
         // Check version compatibility here
         for (int[] supportedArduinoVersion : supportedArduinoVersions) {
             if (arduinoMajorVersion == supportedArduinoVersion[0] || supportedArduinoVersion[0] == -1) {
                 if (arduinoMinorVersion == supportedArduinoVersion[1] || supportedArduinoVersion[1] == -1) {
                     if (arduinoMajorVersion == supportedArduinoVersion[2] || supportedArduinoVersion[2] == -1) {
-                        System.out.println("Version information matches");
+//                        System.out.println("Version information matches");
                         return;
                     }
                 }
@@ -245,14 +276,31 @@ public class AnimatronicEyesDriver {
         byte[] command = new byte[] {COMMANDS.BLINK.value, delay, 0};
         command[command.length-1] = calculateChecksum(command);
         comm.writeBytes(command, command.length);
-        waitForAcknowledge();
-        waitForReady();
+        if (waitForAcknowledge()) {
+            waitForReady();
+        }
+    }
+
+    public void blinkAnimation(byte delay) {
+        int animationNumber = 1;
+        byte numArgs = 2;
+        byte[] command = new byte[] {COMMANDS.ANIMATION.value,
+                (byte) ((animationNumber >> 4) & 0xFF),
+                (byte) (((animationNumber & 0x0F) << 4) + numArgs),
+                (byte) ((delay >> 8) & 0xFF),
+                (byte) (delay & 0xFF), 0};
+        command[command.length-1] = calculateChecksum(command);
+//        System.out.println(Arrays.toString(command));
+        comm.writeBytes(command, command.length);
+        if (waitForAcknowledge()) {
+            waitForReady();
+        }
     }
 
     private byte calculateChecksum(byte[] bytes) {
         int checksum = 0;
         for (int i = 0; i < bytes.length; i++) {
-            checksum += bytes[i];
+            checksum += ((int)bytes[i]) & 0xFF;
         }
         return (byte) (checksum % 256);
     }
