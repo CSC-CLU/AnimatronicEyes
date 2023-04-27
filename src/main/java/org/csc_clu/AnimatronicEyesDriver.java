@@ -91,7 +91,7 @@ public class AnimatronicEyesDriver {
 
     public static final int driverMajorVersion = 0;
     public static final int driverMinorVersion = 1;
-    public static final int driverPatchVersion = 0;
+    public static final int driverPatchVersion = 1;
     public static int arduinoMajorVersion;
     public static int arduinoMinorVersion;
     public static int arduinoPatchVersion;
@@ -100,7 +100,8 @@ public class AnimatronicEyesDriver {
     private static final int DEFAULT_TIMEOUT = 25; //TIMEOUT = DEFAULT_TIMEOUT * 20ms
 
     private static final int[][] supportedArduinoVersions = new int[][]{
-            {0,5,-1}}; // 0.5.X
+            {0,5,-1}, // 0.5.X
+            {1,0,-1}}; //1.0.X
 
     private enum COMMANDS {
         // PC to Arduino
@@ -281,12 +282,30 @@ public class AnimatronicEyesDriver {
         }
     }
 
-    public void blinkAnimation(byte delay) {
+    public void blinkAnimation(int delay) {
         int animationNumber = 1;
         byte numArgs = 2;
         byte[] command = new byte[] {COMMANDS.ANIMATION.value,
                 (byte) ((animationNumber >> 4) & 0xFF),
                 (byte) (((animationNumber & 0x0F) << 4) + numArgs),
+                (byte) ((delay >> 8) & 0xFF),
+                (byte) (delay & 0xFF), 0};
+        command[command.length-1] = calculateChecksum(command);
+//        System.out.println(Arrays.toString(command));
+        comm.writeBytes(command, command.length);
+        if (waitForAcknowledge()) {
+            waitForReady();
+        }
+    }
+
+    public void eyeRollAnimation(int intensity, int delay) {
+        int animationNumber = 2;
+        byte numArgs = 4;
+        byte[] command = new byte[] {COMMANDS.ANIMATION.value,
+                (byte) ((animationNumber >> 4) & 0xFF),
+                (byte) (((animationNumber & 0x0F) << 4) + numArgs),
+                (byte) ((intensity >> 8) & 0xFF),
+                (byte) (intensity & 0xFF),
                 (byte) ((delay >> 8) & 0xFF),
                 (byte) (delay & 0xFF), 0};
         command[command.length-1] = calculateChecksum(command);

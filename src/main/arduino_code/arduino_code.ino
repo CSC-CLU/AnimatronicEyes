@@ -42,7 +42,7 @@ const byte NAK = 0x15; // Negative Acknowledge
 // Semantic Versioning
 const int8_t majorVersion = 0;
 const int8_t minorVersion = 5;
-const int8_t patchVersion = 0;
+const int8_t patchVersion = 1;
 const char* versionDate = __DATE__ " " __TIME__;
 
 void setup() {
