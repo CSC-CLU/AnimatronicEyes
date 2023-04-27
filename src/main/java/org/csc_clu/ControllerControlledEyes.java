@@ -3,6 +3,10 @@ package org.csc_clu;
 import net.java.games.input.*;
 
 public class ControllerControlledEyes {
+    public static final int eyelidMax = 800;
+    public static final int eyelidCenter = 500;
+    public static final int eyelidMinimum = 0;
+
     public static void main(String[] args) {
         System.setProperty("jinput.loglevel", "OFF");
         AnimatronicEyesDriver eyes = new AnimatronicEyesDriver();
@@ -14,19 +18,25 @@ public class ControllerControlledEyes {
 
                 ControllerInputs inputs = gamepad.getInputs();
 
-                int xval = 512 - (int) (512.0 * inputs.leftX);
-                int yval = 512 - (int) (512.0 * inputs.leftY);
-                int trimval = 750 - (int) (((inputs.l2 + 1.0)/2.0) * 750);
-                byte switchval = inputs.face1 ? (byte)1 : 0;
+                int eyeX = 512 - (int) (512.0 * inputs.leftX);
+                int eyeY = 512 - (int) (512.0 * inputs.leftY);
+                int eyelid = (int) (eyelidCenter + ((eyelidMax - eyelidCenter) * ((inputs.r2 + 1.0) / 2.0)) + ((eyelidCenter - eyelidMinimum) * ((inputs.l2 + 1.0) / -2.0)));
+                boolean blink = inputs.face1;
+                boolean blinkAnimation = inputs.face2;
+                boolean eyeRollAnimation = inputs.face4;
 
                 if (inputs.mode) {
                     break;
                 }
 
-                eyes.setEyePosition(xval, yval);
-                eyes.setEyelidPosition(trimval);
-                if (switchval == 1) {
+                eyes.setEyePosition(eyeX, eyeY);
+                eyes.setEyelidPosition(eyelid);
+                if (blink) {
                     eyes.blinkEyes((byte) 10);
+                } else if (blinkAnimation) {
+                    eyes.blinkAnimation(100);
+                } else if (eyeRollAnimation) {
+//                    eyes.eyeRollAnimation(?, ?);
                 }
             }
         } catch (InterruptedException e) {
@@ -41,8 +51,7 @@ class Gamepad {
     protected Controller gamepad;
     GamepadType gamepadType;
 
-    protected static final String[] supportedGamepads = new String[]{
-            "Nintendo Wii Remote"};
+    protected static final String[] supportedGamepads = new String[]{};
 
     enum GamepadType {
         XBOX_ONE,
