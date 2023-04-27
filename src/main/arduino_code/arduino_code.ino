@@ -81,64 +81,89 @@ void loop() {
       case 0x00: // (NUL) Do nothing / ignore
         break;
       case 0x69: // Initialize eyes
-        if (acknowledge(checksum, Serial.read())) {
-          initializeEyes();
+        {
+          if (acknowledge(checksum, Serial.read())) {
+            initializeEyes();
+          }
+          break;
         }
-        break;
       case 0x56: // Version information
-        if (acknowledge(checksum, Serial.read())) {
-          sendVersionInfo();
+        {
+          if (acknowledge(checksum, Serial.read())) {
+            sendVersionInfo();
+          }
         }
         break;
       case 0x70: // Eye position
-        while(Serial.available() < 5);
-        Serial.readBytes(bytes, 4); // Read in eye position
-        checksum += bytes[0] + bytes[1] + bytes[2] + bytes[3]; // Calculate checksum
-        if (acknowledge(checksum, Serial.read())) {
-          xval = (bytes[0] << 8) | bytes[1]; // Set eye x
-          yval = (bytes[2] << 8) | bytes[3]; // Set eye y
-        }
-        break;
-      case 0x6C: // Eyelid position
-        while(Serial.available() < 3);
-        Serial.readBytes(bytes, 2); // Read in eyelid position
-        checksum += bytes[0] + bytes[1]; // Calculate checksum
-        if (acknowledge(checksum, Serial.read())) {
-          trimval = (bytes[0] << 8) | bytes[1]; // Set eyelid position
-        }
-        break;
-      case 0x62: // Blink
-        while(Serial.available() < 2);
-        uint8_t delay = Serial.read(); // Read in blink delay
-        checksum += delay; // Calculate checksum
-        if (acknowledge(checksum, Serial.read())) {
-          blink(delay * 10); // Play blink animation
-          Serial.write(READY);
-        }
-        break;
-      case 0x61: // Animation
-        while(Serial.available() < 3);
-        Serial.readBytes(bytes, 2); // Read in animation information
-        checksum += bytes[0] + bytes[1]; // Calculate checksum
-        uint16_t animation = (bytes[0] << 4) | (bytes[1] >> 4); // Get animation number
-        byte numBytes = bytes[1] & 0x0F; // Get number of animation arguments
-        if (numBytes != 0) { // If animation arguments are expected
-          while(Serial.available() < numBytes + 1);
-          Serial.readBytes(bytes, numBytes); // Read in animation arguments
-          for (int i = 0; i <= numBytes; i++) {
-            checksum += bytes[i];  // Calculate checksum
+        {
+          while(Serial.available() < 5);
+          Serial.readBytes(bytes, 4); // Read in eye position
+          checksum += bytes[0] + bytes[1] + bytes[2] + bytes[3]; // Calculate checksum
+          if (acknowledge(checksum, Serial.read())) {
+            xval = (bytes[0] << 8) | bytes[1]; // Set eye x
+            yval = (bytes[2] << 8) | bytes[3]; // Set eye y
           }
+          break;
         }
-        if (acknowledge(checksum, Serial.read())) {
-          playAnimation(animation, bytes); // Play animation
-          Serial.write(READY);
+      case 0x6C: // Eyelid position
+        {
+          while(Serial.available() < 3);
+          Serial.readBytes(bytes, 2); // Read in eyelid position
+          checksum += bytes[0] + bytes[1]; // Calculate checksum
+          if (acknowledge(checksum, Serial.read())) {
+            trimval = (bytes[0] << 8) | bytes[1]; // Set eyelid position
+          }
+          break;
         }
-        break;
+      case 0x62: // Blink
+        {
+          while(Serial.available() < 2);
+          uint8_t delay = Serial.read(); // Read in blink delay
+          checksum += delay; // Calculate checksum
+          if (acknowledge(checksum, Serial.read())) {
+            blink(delay * 10); // Play blink animation
+            Serial.write(READY);
+          }
+          break;
+        }
+      case 0x61: // Animation
+        {
+          // Serial1.println("Animation command");
+          // Serial1.print("97, ");
+          while(Serial.available() < 3);
+          Serial.readBytes(bytes, 2); // Read in animation information
+          checksum += bytes[0] + bytes[1]; // Calculate checksum
+          // Serial1.print(bytes[0]);
+          // Serial1.print(", ");
+          // Serial1.print(bytes[1]);
+          // Serial1.print(", ");
+          uint16_t animation = (bytes[0] << 4) | (bytes[1] >> 4); // Get animation number
+          uint8_t numBytes = bytes[1] & 0x0F; // Get number of animation arguments
+          // Serial1.println(animation);
+          // Serial1.println(numBytes);
+          if (numBytes != 0) { // If animation arguments are expected
+            while(Serial.available() < numBytes);
+            Serial.readBytes(bytes, numBytes); // Read in animation arguments
+            for (int i = 0; i < numBytes; i++) {
+              checksum += bytes[i];  // Calculate checksum
+              // Serial1.print(bytes[i]);
+              // Serial1.print(", ");
+            }
+            // Serial1.println();
+          }
+          if (acknowledge(checksum, Serial.read())) {
+            playAnimation(animation, bytes); // Play animation
+            Serial.write(READY);
+          }
+          break;
+        }
       default:
-        Serial1.print(F("Unknown command ("));
-        Serial1.print(command);
-        Serial1.println(F(")"));
-        acknowledge(checksum, 0);
+        {
+          Serial1.print(F("Unknown command ("));
+          Serial1.print(command);
+          Serial1.println(F(")"));
+          acknowledge(checksum, 0);
+        }
     };
   }
 
