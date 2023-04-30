@@ -40,9 +40,9 @@ const byte ACK = 0x06; // Acknowledge
 const byte NAK = 0x15; // Negative Acknowledge
 
 // Semantic Versioning
-const int8_t majorVersion = 0;
-const int8_t minorVersion = 5;
-const int8_t patchVersion = 1;
+const int8_t majorVersion = 1;
+const int8_t minorVersion = 0;
+const int8_t patchVersion = 0;
 const char* versionDate = __DATE__ " " __TIME__;
 
 void setup() {
@@ -71,6 +71,7 @@ void setup() {
   Serial.write(READY);
 }
 
+// Incoming command buffer
 byte* bytes = new byte[100];
 
 void loop() {
@@ -173,8 +174,6 @@ void loop() {
 }
 
 bool acknowledge(byte checksum1, byte checksum2) {
-  // Serial1.println(checksum1);
-  // Serial1.println(checksum2);
   if (checksum1 == checksum2) {
     Serial.write(ACK);
     // Serial1.println(F("ACK"));
@@ -202,6 +201,7 @@ void sendVersionInfo() {
   Serial.write(READY);
 }
 
+// Update eye position (set servo motor positions)
 void updateEyes() {
   lexpulse = map(xval, 0, 1023, 220, 440);
   rexpulse = lexpulse;
@@ -243,7 +243,7 @@ void playAnimation(uint16_t animation, char* arguments) {
     case 1: // Blink (0x????) delay in ms
       blink((arguments[0] << 8) | arguments[1]);
       break;
-    case 2:
+    case 2: // Eye roll (0x????) (0x????)
       eyeroll((arguments[0] << 8) | arguments[1], (arguments[2] << 8) | arguments[3]);
       break;
     default:

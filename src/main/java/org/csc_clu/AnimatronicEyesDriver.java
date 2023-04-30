@@ -5,13 +5,16 @@ import com.fazecast.jSerialComm.SerialPort;
 import java.util.Arrays;
 
 public class AnimatronicEyesDriver {
+
+    // Main method to test if the eyes are working correctly
     public static void main(String[] args) {
         System.out.println("Connecting to animatronic eyes");
         AnimatronicEyesDriver eyes = new AnimatronicEyesDriver();
         System.out.println("Connected.");
+        System.out.println(eyes);
 
         try {
-            int delay = 500; // Delay in ms
+            int delay = 500; // Delay between movements in ms
 
             // Reinitialize eyes
             eyes.initialize();
@@ -34,7 +37,7 @@ public class AnimatronicEyesDriver {
             Thread.sleep(delay);
             eyes.setEyePosition(512, 512);
             Thread.sleep(delay);
-
+            // Test diagonal eye movement
             eyes.setEyePosition(0, 0);
             Thread.sleep(delay);
             eyes.setEyePosition(512, 512);
@@ -53,19 +56,11 @@ public class AnimatronicEyesDriver {
             Thread.sleep(delay);
 
             // Test eyelid movement
-            eyes.setEyelidPosition(128);
-            Thread.sleep(delay);
             eyes.setEyelidPosition(0);
-            Thread.sleep(delay);
-            eyes.setEyelidPosition(128);
             Thread.sleep(delay);
             eyes.setEyelidPosition(512);
             Thread.sleep(delay);
-            eyes.setEyelidPosition(640);
-            Thread.sleep(delay);
             eyes.setEyelidPosition(750);
-            Thread.sleep(delay);
-            eyes.setEyelidPosition(640);
             Thread.sleep(delay);
             eyes.setEyelidPosition(512);
             Thread.sleep(delay);
@@ -79,7 +74,7 @@ public class AnimatronicEyesDriver {
             // Test animations
             eyes.blinkAnimation((byte) 100);
             Thread.sleep(delay);
-//            eyes.blinkAnimation((byte) 200);
+//            eyes.blinkAnimation((byte) 200); // Currently broken. Needs to be debugged
             Thread.sleep(delay);
 
         } catch (InterruptedException e) {
@@ -89,19 +84,23 @@ public class AnimatronicEyesDriver {
         }
     }
 
-    public static final int driverMajorVersion = 0;
-    public static final int driverMinorVersion = 1;
-    public static final int driverPatchVersion = 1;
+    // Semantic Versioning
+    public static final int driverMajorVersion = 1;
+    public static final int driverMinorVersion = 0;
+    public static final int driverPatchVersion = 0;
+    // For storing Arduino code version
     public static int arduinoMajorVersion;
     public static int arduinoMinorVersion;
     public static int arduinoPatchVersion;
+    // Comm port being used
     private static SerialPort comm;
 
     private static final int DEFAULT_TIMEOUT = 25; //TIMEOUT = DEFAULT_TIMEOUT * 20ms
 
+    // Which Arduino code versions does this driver support (-1 for don't care)
     private static final int[][] supportedArduinoVersions = new int[][]{
-            {0,5,-1}, // 0.5.X
-            {1,0,-1}}; //1.0.X
+            {0,5,-1},  // 0.5.X
+            {1,0,-1}}; // 1.0.X
 
     private enum COMMANDS {
         // PC to Arduino
@@ -126,35 +125,32 @@ public class AnimatronicEyesDriver {
     }
 
     public AnimatronicEyesDriver() {
-        SerialPort[] serialPorts = SerialPort.getCommPorts();
+        SerialPort[] serialPorts = SerialPort.getCommPorts(); // Get all comm devices on the system
+
         if (serialPorts.length == 0) {
             throw new RuntimeException("No serial devices were found.");
         } else if (serialPorts.length == 1) {
             comm = serialPorts[0];
-        } else {
+        } else { // If multiple serial ports were found (How do you select the correct port for the Arduino?)
             comm = serialPorts[0];
         }
-//        System.out.println("Comm device: " + comm.getPortDescription());
 
-//        System.out.println("Opening comm device");
+        // Open comm port and flush IO buffers
         comm.openPort();
         comm.flushIOBuffers();
 
-//        System.out.println("Waiting for device to be ready");
+        // Wait for Arduino to reset
         waitForReady();
 
-//        System.out.println("Initializing animatronics");
+        // Initialize eyes
         initialize();
 
-//        System.out.println("Getting version information");
+        // Get version info from Arduino and check compatibility
         getEyeVersionInfo();
-//        System.out.println("Checking version information");
-        // Check version compatibility here
         for (int[] supportedArduinoVersion : supportedArduinoVersions) {
             if (arduinoMajorVersion == supportedArduinoVersion[0] || supportedArduinoVersion[0] == -1) {
                 if (arduinoMinorVersion == supportedArduinoVersion[1] || supportedArduinoVersion[1] == -1) {
                     if (arduinoMajorVersion == supportedArduinoVersion[2] || supportedArduinoVersion[2] == -1) {
-//                        System.out.println("Version information matches");
                         return;
                     }
                 }
@@ -163,6 +159,7 @@ public class AnimatronicEyesDriver {
         throw new RuntimeException("Driver does not support arduino version.");
     }
 
+    // Wait for the Arduino to respond with READY
     private boolean waitForReady() {
         return waitForReady(DEFAULT_TIMEOUT);
     }
@@ -186,6 +183,7 @@ public class AnimatronicEyesDriver {
         return false;
     }
 
+    // Wait for the Arduino to respond with ACK or NAK
     private boolean waitForAcknowledge() {
         return waitForAcknowledge(DEFAULT_TIMEOUT);
     }
@@ -250,8 +248,8 @@ public class AnimatronicEyesDriver {
         for (byte aByte : bytes) {
             arduinoVersionDate.append((char)aByte);
         }
-        System.out.printf("Animatronic eyes v%d.%d.%d%n", arduinoMajorVersion, arduinoMinorVersion, arduinoPatchVersion);
-        System.out.println("Compiled on " + arduinoVersionDate);
+//        System.out.printf("Animatronic eyes v%d.%d.%d%n", arduinoMajorVersion, arduinoMinorVersion, arduinoPatchVersion);
+//        System.out.println("Compiled on " + arduinoVersionDate);
         waitForReady();
     }
 
@@ -326,12 +324,6 @@ public class AnimatronicEyesDriver {
 
     public void close() {
         comm.closePort();
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        close();
     }
 
     @Override
